@@ -68,14 +68,18 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
     if (phone) {
       await saveSubscriber(phone);
 
+      // Normalize to E.164 for sending
+      const normalized = phone.replace(/\D/g, '');
+      const e164 = normalized.startsWith('1') ? `+${normalized}` : `+1${normalized}`;
+
       // Send welcome text
       try {
         await twilioClient.messages.create({
           body: "you're in. every morning at 6am you'll get one word. starting tomorrow.",
           from: process.env.TWILIO_PHONE_NUMBER,
-          to: phone.startsWith('+') ? phone : `+1${phone.replace(/\D/g, '')}`
+          to: e164
         });
-        console.log(`Welcome text sent to ${phone}`);
+        console.log(`Welcome text sent to ${e164}`);
       } catch (err) {
         console.error('Failed to send welcome text:', err.message);
       }
