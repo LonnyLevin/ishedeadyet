@@ -49,6 +49,8 @@
     }
     .btn-secondary:hover { opacity: 0.75; }
     .price { font-size: 10px; color: var(--muted); letter-spacing: 0.14em; margin-top: 0.5rem; }
+    .confirm { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; font-style: italic; margin-top: 0.5rem; opacity: 0; transition: opacity 0.5s; }
+    .confirm.visible { opacity: 1; }
     .about { max-width: 480px; margin: 4rem auto 2rem; text-align: left; border-top: 1px solid var(--faint); padding-top: 2rem; }
     .about h2 { font-size: 11px; letter-spacing: 0.18em; text-transform: lowercase; color: var(--muted); margin-bottom: 1rem; }
     .about p { font-size: 12px; color: var(--muted); line-height: 1.8; margin-bottom: 1rem; }
@@ -69,6 +71,7 @@
         <input class="email-input" type="email" id="email" placeholder="your email" />
         <button class="btn" id="notifyBtn" onclick="handleWaitlist()">notify me</button>
       </div>
+      <p class="confirm" id="confirm">you're on the list.</p>
       <a class="btn-secondary" href="https://buy.stripe.com/cNieVc4LTgkG1rZ0P67ok01" target="_blank">or subscribe now — $0.99/mo</a>
       <p class="price">texts start when we're approved &nbsp;·&nbsp; cancel anytime</p>
     </div>
@@ -95,15 +98,30 @@
         document.getElementById('email').focus();
         return;
       }
-      // Open Google Form in new tab with email prefilled
-      var url = 'https://docs.google.com/forms/d/e/1FAIpQLScgUS7alDZD8H3N1hQX-psaOjxqaZ2m8mOzHv8vbUxM2diNLw/viewform?entry.152320621=' + encodeURIComponent(email);
-      window.open(url, '_blank');
 
+      // Submit silently to Google Form in background
+      var formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScgUS7alDZD8H3N1hQX-psaOjxqaZ2m8mOzHv8vbUxM2diNLw/formResponse';
+      var formData = new FormData();
+      formData.append('entry.152320621', email);
+
+      fetch(formUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: formData
+      });
+
+      // Update UI immediately — no waiting, no new tab
       var btn = document.getElementById('notifyBtn');
       btn.textContent = 'done.';
       btn.style.opacity = '0.4';
       btn.style.cursor = 'default';
       btn.onclick = null;
+
+      document.getElementById('email').style.opacity = '0.3';
+      document.getElementById('email').disabled = true;
+
+      var confirm = document.getElementById('confirm');
+      confirm.classList.add('visible');
     }
   </script>
 </body>
