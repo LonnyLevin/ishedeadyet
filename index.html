@@ -34,31 +34,15 @@
     .eyebrow { font-size: 11px; letter-spacing: 0.22em; color: var(--muted); text-transform: lowercase; margin-bottom: 2.8rem; }
     .word { font-size: clamp(80px, 18vw, 140px); font-weight: 400; line-height: 1; letter-spacing: -0.03em; color: var(--ink); margin-bottom: 2.8rem; user-select: none; }
     .rule { width: 1px; height: 52px; background: var(--faint); margin-bottom: 2.8rem; }
-    .sub { font-size: 12px; color: var(--muted); letter-spacing: 0.08em; line-height: 1.9; margin-bottom: 2rem; }
-    .waitlist-note { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; line-height: 1.7; max-width: 300px; margin-bottom: 1.5rem; font-style: italic; }
-    .email-form { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 280px; margin-bottom: 1.2rem; }
-    .email-input {
-      font-family: 'Courier Prime', 'Courier New', monospace; font-size: 13px;
-      padding: 11px 14px; border: 0.5px solid var(--faint); border-radius: 2px;
-      background: var(--bg); color: var(--ink); outline: none; text-align: center; letter-spacing: 0.03em;
-    }
-    .email-input:focus { border-color: var(--muted); }
-    .btn {
-      font-family: 'Courier Prime', 'Courier New', monospace; font-size: 12px;
-      letter-spacing: 0.18em; text-transform: lowercase; color: var(--bg); background: var(--ink);
-      border: none; padding: 13px 28px; cursor: pointer; transition: opacity 0.2s;
-    }
-    .btn:hover { opacity: 0.75; }
-    .btn-secondary {
+    .sub { font-size: 12px; color: var(--muted); letter-spacing: 0.08em; line-height: 1.9; margin-bottom: 2.5rem; }
+    .btn-primary {
       display: inline-block; font-family: 'Courier Prime', 'Courier New', monospace;
-      font-size: 11px; letter-spacing: 0.12em; text-transform: lowercase; color: var(--muted);
-      background: transparent; border: 0.5px solid var(--faint); padding: 10px 20px;
-      cursor: pointer; text-decoration: none; transition: opacity 0.2s; margin-top: 0.5rem;
+      font-size: 12px; letter-spacing: 0.18em; text-transform: lowercase; color: var(--bg);
+      background: var(--ink); border: none; padding: 13px 28px; cursor: pointer;
+      text-decoration: none; transition: opacity 0.2s;
     }
-    .btn-secondary:hover { opacity: 0.75; }
-    .price { font-size: 10px; color: var(--muted); letter-spacing: 0.14em; margin-top: 0.5rem; }
-    .confirm { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; font-style: italic; margin-top: 0.5rem; opacity: 0; transition: opacity 0.5s; }
-    .confirm.visible { opacity: 1; }
+    .btn-primary:hover { opacity: 0.75; }
+    .price { font-size: 10px; color: var(--muted); letter-spacing: 0.14em; margin-top: 0.8rem; }
     .about { max-width: 480px; margin: 4rem auto 2rem; text-align: left; border-top: 1px solid var(--faint); padding-top: 2rem; }
     .about h2 { font-size: 11px; letter-spacing: 0.18em; text-transform: lowercase; color: var(--muted); margin-bottom: 1rem; }
     .about p { font-size: 12px; color: var(--muted); line-height: 1.8; margin-bottom: 1rem; }
@@ -74,14 +58,8 @@
       <p class="word">no.</p>
       <div class="rule"></div>
       <p class="sub">every morning at 6am<br>you get a text.<br>one word.</p>
-      <p class="waitlist-note">our carrier is currently reviewing whether the word "no." poses a threat to national security. drop your email and we'll notify you the moment we're cleared for launch.</p>
-      <div class="email-form">
-        <input class="email-input" type="email" id="email" placeholder="your email" />
-        <button class="btn" id="notifyBtn" onclick="handleWaitlist()">notify me</button>
-      </div>
-      <p class="confirm" id="confirm">you're on the list.</p>
-      <a class="btn-secondary" href="https://buy.stripe.com/cNieVc4LTgkG1rZ0P67ok01" target="_blank">or subscribe now — $0.99/mo</a>
-      <p class="price">texts start when we're approved &nbsp;·&nbsp; cancel anytime</p>
+      <a class="btn-primary" href="https://buy.stripe.com/cNieVc4LTgkG1rZ0P67ok01" target="_blank">subscribe — $0.99/mo</a>
+      <p class="price">cancel anytime &nbsp;·&nbsp; reply stop to unsubscribe</p>
     </div>
 
     <div class="about">
@@ -98,39 +76,5 @@
     <div><a href="mailto:hello@ishedeadyet.app">hello@ishedeadyet.app</a></div>
     <div><a href="/privacy">privacy policy</a> &nbsp;·&nbsp; <a href="/terms">terms</a></div>
   </footer>
-
-  <script>
-    function handleWaitlist() {
-      var email = document.getElementById('email').value.trim();
-      if (!email || !email.includes('@')) {
-        document.getElementById('email').focus();
-        return;
-      }
-
-      // Submit silently to Google Form in background
-      var formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScgUS7alDZD8H3N1hQX-psaOjxqaZ2m8mOzHv8vbUxM2diNLw/formResponse';
-      var formData = new FormData();
-      formData.append('entry.152320621', email);
-
-      fetch(formUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: formData
-      });
-
-      // Update UI immediately — no waiting, no new tab
-      var btn = document.getElementById('notifyBtn');
-      btn.textContent = 'done.';
-      btn.style.opacity = '0.4';
-      btn.style.cursor = 'default';
-      btn.onclick = null;
-
-      document.getElementById('email').style.opacity = '0.3';
-      document.getElementById('email').disabled = true;
-
-      var confirm = document.getElementById('confirm');
-      confirm.classList.add('visible');
-    }
-  </script>
 </body>
 </html>
