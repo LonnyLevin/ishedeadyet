@@ -4,7 +4,6 @@ const cron = require('node-cron');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const fs = require('fs-extra');
 const path = require('path');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -13,6 +12,30 @@ const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
+
+// Message rotation
+const MESSAGES = [
+  'No.',
+  'Still no.',
+  'Nope.',
+  'No. Go back to sleep.',
+  'No. Unfortunately.',
+];
+const MESSAGE_INDEX_FILE = path.join(__dirname, 'message_index.json');
+
+async function getNextMessage() {
+  let index = 0;
+  try {
+    await fs.ensureFile(MESSAGE_INDEX_FILE);
+    const data = await fs.readFile(MESSAGE_INDEX_FILE, 'utf8');
+    index = data ? JSON.parse(data).index : 0;
+  } catch {
+    index = 0;
+  }
+  const message = MESSAGES[index % MESSAGES.length];
+  await fs.writeFile(MESSAGE_INDEX_FILE, JSON.stringify({ index: (index + 1) % MESSAGES.length }));
+  return message;
+}
 
 // File to store subscriber phone numbers
 const SUBSCRIBERS_FILE = path.join(__dirname, 'subscribers.json');
@@ -43,7 +66,6 @@ async function saveSubscriber(phone) {
 app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
-
   try {
     event = stripe.webhooks.constructEvent(
       req.body,
@@ -58,20 +80,16 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
   // Handle successful subscription creation
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-
     // Extract phone number from custom fields
     const phoneField = session.custom_fields?.find(
       f => f.label?.custom?.toLowerCase().includes('phone')
     );
     const phone = phoneField?.text?.value || session.customer_details?.phone;
-
     if (phone) {
       await saveSubscriber(phone);
-
       // Normalize to E.164 for sending
       const normalized = phone.replace(/\D/g, '');
       const e164 = normalized.startsWith('1') ? `+${normalized}` : `+1${normalized}`;
-
       // Send welcome text
       try {
         await twilioClient.messages.create({
@@ -99,11 +117,12 @@ app.get('/', (req, res) => res.send('is he dead yet? no.'));
 cron.schedule('0 11 * * *', async () => {
   console.log('Sending daily text...');
   const subscribers = await getSubscribers();
-
+  const message = await getNextMessage();
+  console.log(`Today's message: "${message}"`);
   for (const phone of subscribers) {
     try {
       await twilioClient.messages.create({
-        body: 'no.',
+        body: message,
         from: process.env.TWILIO_PHONE_NUMBER,
         to: phone
       });
@@ -112,7 +131,6 @@ cron.schedule('0 11 * * *', async () => {
       console.error(`Failed to send to ${phone}:`, err.message);
     }
   }
-
   console.log(`Daily text sent to ${subscribers.length} subscribers.`);
 }, {
   timezone: 'America/New_York'
