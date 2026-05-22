@@ -21,7 +21,8 @@ const MESSAGES = [
   'No. Go back to sleep.',
   'No. Unfortunately.',
 ];
-const MESSAGE_INDEX_FILE = path.join(__dirname, 'message_index.json');
+const DATA_DIR = '/data';
+const MESSAGE_INDEX_FILE = path.join(DATA_DIR, 'message_index.json');
 
 async function getNextMessage() {
   let index = 0;
@@ -38,7 +39,7 @@ async function getNextMessage() {
 }
 
 // File to store subscriber phone numbers
-const SUBSCRIBERS_FILE = path.join(__dirname, 'subscribers.json');
+const SUBSCRIBERS_FILE = path.join(DATA_DIR, 'subscribers.json');
 
 // Load or initialize subscribers list
 async function getSubscribers() {
