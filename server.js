@@ -103,4 +103,79 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
         console.error('Failed to send welcome text:', err.message);
       }
     } else {
-      console.warn('No phone
+      console.warn('No phone number found in session:', session.id);
+    }
+  }
+
+  res.json({ received: true });
+});
+
+// Health check
+app.use(express.json());
+
+// Allow the frontend (ishedeadyet.app) to POST to this backend
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+
+app.get('/', (req, res) => res.send('is he dead yet? no.'));
+
+// Free signup — no Stripe involved
+app.post('/subscribe', async (req, res) => {
+  const rawPhone = (req.body?.phone || '').trim();
+  const digits = rawPhone.replace(/\D/g, '');
+
+  if (digits.length < 10 || digits.length > 11) {
+    return res.status(400).json({ error: 'Enter a valid 10-digit US phone number.' });
+  }
+
+  const e164 = digits.length === 11 ? `+${digits}` : `+1${digits}`;
+
+  try {
+    await saveSubscriber(e164);
+    try {
+      await twilioClient.messages.create({
+        body: "you're in. every morning at 6am you'll get one word. starting tomorrow.",
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: e164
+      });
+    } catch (err) {
+      console.error('Failed to send welcome text:', err.message);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Subscribe error:', err.message);
+    res.status(500).json({ error: 'Something went wrong. Try again.' });
+  }
+});
+
+// Daily text at 6am Eastern (11:00 UTC)
+cron.schedule('0 11 * * *', async () => {
+  console.log('Sending daily text...');
+  const subscribers = await getSubscribers();
+  const message = await getNextMessage();
+  console.log(`Today's message: "${message}"`);
+  for (const phone of subscribers) {
+    try {
+      await twilioClient.messages.create({
+        body: message,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to: phone
+      });
+      console.log(`Sent to ${phone}`);
+    } catch (err) {
+      console.error(`Failed to send to ${phone}:`, err.message);
+    }
+  }
+  console.log(`Daily text sent to ${subscribers.length} subscribers.`);
+}, {
+  timezone: 'America/New_York'
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

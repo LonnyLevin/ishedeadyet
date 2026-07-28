@@ -26,4 +26,112 @@
     .main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .grain {
       pointer-events: none; position: fixed; inset: 0; z-index: 100; opacity: 0.03;
-      background-image:
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px;
+    }
+    .wrapper { display: flex; flex-direction: column; align-items: center; opacity: 0; animation: fadein 1.2s ease forwards; animation-delay: 0.2s; }
+    @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .eyebrow { font-size: 11px; letter-spacing: 0.22em; color: var(--muted); text-transform: lowercase; margin-bottom: 2.8rem; }
+    .word { font-size: clamp(80px, 18vw, 140px); font-weight: 400; line-height: 1; letter-spacing: -0.03em; color: var(--ink); margin-bottom: 2.8rem; user-select: none; }
+    .rule { width: 1px; height: 52px; background: var(--faint); margin-bottom: 2.8rem; }
+    .sub { font-size: 12px; color: var(--muted); letter-spacing: 0.08em; line-height: 1.9; margin-bottom: 2.5rem; }
+    .btn-primary {
+      display: inline-block; font-family: 'Courier Prime', 'Courier New', monospace;
+      font-size: 12px; letter-spacing: 0.18em; text-transform: lowercase; color: var(--bg);
+      background: var(--ink); border: none; padding: 13px 28px; cursor: pointer;
+      text-decoration: none; transition: opacity 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.75; }
+    .btn-primary:disabled { opacity: 0.4; cursor: default; }
+    .price { font-size: 10px; color: var(--muted); letter-spacing: 0.14em; margin-top: 0.8rem; }
+    .signup-form { display: flex; flex-direction: column; align-items: center; gap: 0.9rem; }
+    .phone-input {
+      font-family: 'Courier Prime', 'Courier New', monospace;
+      font-size: 13px; letter-spacing: 0.05em; text-align: center; color: var(--ink);
+      background: transparent; border: none; border-bottom: 1px solid var(--faint);
+      padding: 8px 4px; width: 220px; outline: none;
+    }
+    .phone-input:focus { border-bottom-color: var(--ink); }
+    .status-msg { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; min-height: 1.2em; }
+    .status-msg.error { color: #a33; }
+    .about { max-width: 480px; margin: 4rem auto 2rem; text-align: left; border-top: 1px solid var(--faint); padding-top: 2rem; }
+    .about h2 { font-size: 11px; letter-spacing: 0.18em; text-transform: lowercase; color: var(--muted); margin-bottom: 1rem; }
+    .about p { font-size: 12px; color: var(--muted); line-height: 1.8; margin-bottom: 1rem; }
+    footer { border-top: 1px solid var(--faint); padding: 2rem 0 1rem; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; line-height: 2; text-align: center; }
+    footer a { color: var(--muted); text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="grain"></div>
+  <div class="main">
+    <div class="wrapper">
+      <p class="eyebrow">is he dead yet?</p>
+      <p class="word">no.</p>
+      <div class="rule"></div>
+      <p class="sub">every morning at 6am<br>you get a text.<br>one word.</p>
+      <form class="signup-form" id="signup-form">
+        <input class="phone-input" type="tel" id="phone-input" placeholder="your phone number" required />
+        <button class="btn-primary" type="submit" id="signup-btn">get the text — it's free</button>
+        <p class="status-msg" id="status-msg"></p>
+      </form>
+      <p class="price">cancel anytime &nbsp;·&nbsp; reply stop to unsubscribe</p>
+    </div>
+
+    <script>
+      const BACKEND_URL = 'https://ishedeadyet.onrender.com';
+      const form = document.getElementById('signup-form');
+      const input = document.getElementById('phone-input');
+      const btn = document.getElementById('signup-btn');
+      const status = document.getElementById('status-msg');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        status.textContent = '';
+        status.classList.remove('error');
+        btn.disabled = true;
+        btn.textContent = 'signing you up...';
+
+        try {
+          const res = await fetch(`${BACKEND_URL}/subscribe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: input.value })
+          });
+          const data = await res.json();
+
+          if (res.ok && data.success) {
+            btn.textContent = "you're in.";
+            input.value = '';
+            input.disabled = true;
+            status.textContent = 'first text arrives tomorrow at 6am.';
+          } else {
+            btn.disabled = false;
+            btn.textContent = "get the text — it's free";
+            status.textContent = data.error || 'something went wrong. try again.';
+            status.classList.add('error');
+          }
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = "get the text — it's free";
+          status.textContent = 'network error. try again.';
+          status.classList.add('error');
+        }
+      });
+    </script>
+
+    <div class="about">
+      <h2>about</h2>
+      <p>Is He Dead Yet? is a daily SMS notification service. Subscribers receive one brief status update text message each morning at 6am Eastern time.</p>
+      <p>The service is free. Subscribers opt in by entering their phone number and may cancel at any time by replying STOP to any message.</p>
+      <p>This is a legitimate, fully operational service. Messages are sent once per day via automated SMS. No spam. No sharing of your data.</p>
+    </div>
+  </div>
+
+  <footer>
+    <div>is he dead yet? &nbsp;·&nbsp; a daily sms notification service</div>
+    <div>9106 Ewing Ave, Evanston, IL 60203</div>
+    <div><a href="mailto:hello@ishedeadyet.app">hello@ishedeadyet.app</a></div>
+    <div><a href="/privacy">privacy policy</a> &nbsp;·&nbsp; <a href="/terms">terms</a></div>
+  </footer>
+</body>
+</html>
