@@ -103,40 +103,4 @@ app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res)
         console.error('Failed to send welcome text:', err.message);
       }
     } else {
-      console.warn('No phone number found in session:', session.id);
-    }
-  }
-
-  res.json({ received: true });
-});
-
-// Health check
-app.use(express.json());
-app.get('/', (req, res) => res.send('is he dead yet? no.'));
-
-// Daily text at 6am Eastern (11:00 UTC)
-cron.schedule('0 11 * * *', async () => {
-  console.log('Sending daily text...');
-  const subscribers = await getSubscribers();
-  const message = await getNextMessage();
-  console.log(`Today's message: "${message}"`);
-  for (const phone of subscribers) {
-    try {
-      await twilioClient.messages.create({
-        body: message,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: phone
-      });
-      console.log(`Sent to ${phone}`);
-    } catch (err) {
-      console.error(`Failed to send to ${phone}:`, err.message);
-    }
-  }
-  console.log(`Daily text sent to ${subscribers.length} subscribers.`);
-}, {
-  timezone: 'America/New_York'
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+      console.warn('No phone
